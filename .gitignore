@@ -1,7 +1,13 @@
+metadata/sunrgbd/Dataset/SUNRGBD
+metadata/sunrgbd/images
+
 *.m~
 typicalFrames
 
 *.pdf
+*.pickle
+*.mat
+*.json
 
 ## Python related files
 .idea/
