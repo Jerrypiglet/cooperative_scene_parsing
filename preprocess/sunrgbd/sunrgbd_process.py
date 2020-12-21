@@ -11,6 +11,7 @@ sys.path.append('.')
 import json
 import pickle
 import config
+from tqdm import tqdm
 import os
 import os.path as op
 import numpy as np
@@ -71,9 +72,9 @@ def prepare_data(gt_2d_bdb=False, patch_h=224, patch_w=224, shift=True, iou_thre
     # obj_category = dict()
     if not op.exists(data_root):
         os.mkdir(data_root)
-    for i in range(10335):
+    for i in tqdm(range(10335)):
         sequence = readsunrgbdframe(image_id=i+1)
-        print i+1
+        # print(i+1)
         sequence._R_tilt = loadmat(op.join(PATH.metadata_root, 'updated_rtilt', str(i+1) + '.mat'))['r_tilt']
         # R_ex is cam to world
         sequence._R_ex = np.array([[1, 0, 0], [0, 0, -1], [0, 1, 0]]).dot(sequence.R_tilt).dot(np.array([[1, 0, 0], [0, 0, 1], [0, -1, 0]]))
@@ -83,7 +84,7 @@ def prepare_data(gt_2d_bdb=False, patch_h=224, patch_w=224, shift=True, iou_thre
             if check_bdb(bdb2d, 2*sequence.K[0, 2], 2*sequence.K[1, 2]):
                 result.append(bdb2d)
             else:
-                print 'ground truth not valid'
+                print('ground truth not valid')
         sequence._bdb2d = result
 
         bdb2d_from_3d_list = []
@@ -100,7 +101,7 @@ def prepare_data(gt_2d_bdb=False, patch_h=224, patch_w=224, shift=True, iou_thre
             bdb2d_from_3d = project_struct_bdb_to_2d(basis, coeffs, center, sequence.R_ex.T, K)
             projected_2d_center = project_3d_points_to_2d(center.reshape(1, 3), sequence.R_ex.T, K)
             if bdb2d_from_3d is None:
-                print '%s not valid' % (bdb3d['classname'][0])
+                print('%s not valid' % (bdb3d['classname'][0]))
                 continue
             bdb2d_from_3d['classname'] = bdb3d['classname'][0]
             bdb2d_from_3d_list.append(bdb2d_from_3d)
@@ -166,8 +167,8 @@ def prepare_data(gt_2d_bdb=False, patch_h=224, patch_w=224, shift=True, iou_thre
         layout_flip['ori_cls'], layout_flip['ori_reg'] = ori_cls_reg(l_basis[1, :], bin, layout=True, flip=True)
         # print layout['ori_cls'], layout_flip['ori_cls']
         # clean the ground truth
-        with open(template_path, 'r') as f:
-            size_template = pickle.load(f)
+        with open(template_path, 'rb') as f:
+            size_template = pickle.load(f, encoding='latin1')
         f.close()
         boxes_out = list()
         boxes_out_flip = list()
@@ -238,14 +239,14 @@ def prepare_data(gt_2d_bdb=False, patch_h=224, patch_w=224, shift=True, iou_thre
             test_path.append(save_path)
         else:
             train_path.append(save_path)
-        with open(save_path, 'w') as f:
+        with open(save_path, 'wb') as f:
             pickle.dump(data, f)
         f.close()
-        with open(save_path_flip, 'w') as f:
+        with open(save_path_flip, 'wb') as f:
             pickle.dump(data_flip, f)
         f.close()
-    print np.array(layout_centroid).mean(axis=0)
-    print np.array(layout_coeffs).mean(axis=0)
+    print(np.array(layout_centroid).mean(axis=0))
+    print(np.array(layout_coeffs).mean(axis=0))
     if not shift:
         with open(op.join(PATH.metadata_root, 'train.json'), 'w') as f:
             json.dump(train_path, f)
@@ -637,14 +638,14 @@ def learn_size_bin(category_specific=True):
             else:
                 kmeans = KMeans(n_clusters=N_CLUSTER, random_state=0).fit(size_info[category])
             size_bins[category] = kmeans.cluster_centers_
-            print category, size_bins[category]
+            print(category, size_bins[category])
         with open(op.join(PATH.metadata_root, 'size_bin_category.pickle'), 'w') as f:
             pickle.dump(size_bins, f)
         f.close()
         with open(op.join(PATH.metadata_root, 'size_avg_category.pickle'), 'w') as f:
             pickle.dump(size_avg, f)
         f.close()
-        print size_avg
+        print(size_avg)
     else:
         size_array = list()
         for key, value in size_info.items():
@@ -653,7 +654,7 @@ def learn_size_bin(category_specific=True):
         kmeans = KMeans(n_clusters=N_CLUSTER, random_state=0).fit(size_array)
         with open(op.join(PATH.metadata_root, 'size_bin_full.pickle'), 'w') as f:
             pickle.dump(kmeans.cluster_centers_, f)
-        print kmeans.cluster_centers_
+        print(kmeans.cluster_centers_)
 
 
 def main():

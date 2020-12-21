@@ -7,9 +7,55 @@ scripts used in SUNRGBD Dataset
 
 """
 import numpy as np
-from camera_utils import normalize_point
+from utils.camera_utils import normalize_point
 from shapely.geometry.polygon import Polygon
+import json
 
+def read_seg2d_data(seg2d_path):
+
+    # load seg 2d data.
+    try:
+        with open(seg2d_path, encoding='utf-8') as data_file:
+            seg2d_data = json.load(data_file)
+    except Exception as err:
+        with open(seg2d_path, 'r') as data_file:
+            content = data_file.readlines()[0]
+        if "\\" in content:
+            error_string = "\\"
+        else:
+            error_string = content[err.pos - 1:err.pos + 7]
+        content = content.replace(error_string, "")
+        seg2d_data = json.loads(content)
+
+    number_of_anot = len(seg2d_data["frames"][0]["polygon"])
+
+    seg_list = []
+
+    for i in range(number_of_anot):
+        x = seg2d_data["frames"][0]["polygon"][i]["x"]
+        y = seg2d_data["frames"][0]["polygon"][i]["y"]
+        idx_obj = seg2d_data["frames"][0]["polygon"][i]["object"]
+
+        if idx_obj >= len(seg2d_data['objects']):
+            continue
+
+        label = seg2d_data['objects'][idx_obj]["name"].lower()
+        label = ''.join(i for i in label if not i.isdigit())
+
+        if type(x) != list or type(y) != list:
+            continue
+
+        all_points_x = list(map(round, x))
+        all_points_y = list(map(round, y))
+
+        seg_data = {'polygon':
+                        {'x': all_points_x,
+                         'y': all_points_y},
+                    'name': label}
+
+        seg_list.append(seg_data)
+
+    return seg_list
 
 def flip_towards_viewer(normals, points):
     points = points / np.linalg.norm(points)

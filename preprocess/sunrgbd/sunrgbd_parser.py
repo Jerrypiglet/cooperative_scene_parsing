@@ -13,7 +13,7 @@ from scipy.io import loadmat
 import config
 import sunrgbd_visualize
 PATH = config.Config('sunrgbd')
-
+from utils.sunrgbd_utils import read_seg2d_data
 
 # class of SUNRGBD Data
 class SUNRGBDData(object):
@@ -106,8 +106,10 @@ def readsunrgbdframe(image_name=None, image_id=None):
     f.close()
     if image_name:
         image_id = image_list.index(image_name) + 1
-    with open(os.path.join(clean_data_path, 'data_all', str(image_id) + '.pickle'), 'r') as f:
-        img_info = pickle.load(f)
+    pickle_path = os.path.join(clean_data_path, 'data_all', str(image_id) + '.pickle')
+    with open(pickle_path, 'rb') as f:
+        # print(pickle_path)
+        img_info = pickle.load(f, encoding='latin1')
     f.close()
 
     # change data root manually
@@ -126,7 +128,11 @@ def readsunrgbdframe(image_name=None, image_id=None):
     if 'gt3dcorner' not in img_info.keys():
         img_info['gt3dcorner'] = None
     # load segmentation
+    # print(img_info['imgdepth_path'])
     # img_info['seg2d'] = loadmat(img_info['seg2d_path'])['seg_2d']
+    img_info['seg2d_path'] = os.path.join(os.path.dirname(os.path.dirname(img_info['imgdepth_path'])), 'annotation2Dfinal', 'index.json')
+    img_info['seg2d'] = read_seg2d_data(img_info['seg2d_path'])
+
     scene_category_path = os.path.join(root.data_root, img_info['sequence_name'], 'scene.txt')
     if not os.path.exists(scene_category_path):
         scene_category = None
@@ -141,8 +147,8 @@ def demo():
     # load data
     # data_frame = readsunrgbdframe(image_id=6000)
     data_frame = readsunrgbdframe(image_id=0)
-    print data_frame.bdb3d
-    print data_frame.bdb2d
+    print(data_frame.bdb3d)
+    print(data_frame.bdb2d)
     # show rgbimg
     # plt.figure()
     # plt.imshow(data_frame.imgrgb)

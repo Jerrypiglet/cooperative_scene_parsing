@@ -71,7 +71,8 @@ class Config(object):
             bin['layout_ori_bin'] = [[i * ORI_LAYOUT_BIN_WIDTH, (i + 1) * ORI_LAYOUT_BIN_WIDTH] for i in
                                      range(NUM_LAYOUT_ORI_BIN)]
             template_path = os.path.join(self.metadata_root, 'size_avg_category.pickle')
-            avg_size = pickle.load(open(template_path, 'r'))
+            with open(template_path, 'rb') as f:
+                avg_size = pickle.load(f, encoding='latin1')
             bin['avg_size'] = [avg_size[obj] for obj in self.obj_category]
         elif self.dataset == 'suncg':
             # center bins
